@@ -47,24 +47,16 @@ useEffect(() => {
 const addItem = async (item) => { //adds new item to Firestore
     const name = item?.trim()
     if (!name) return
-    const docRef = doc(collection(firestore, 'tents'), uuidv4()) //use normalized id
-    const docSnap = await getDoc(docRef) //checks if doc already exists
-    
-    await setDoc(docRef, { name: name, oac_num: 0, in_stock: true, loaned: false, details: "", leader_signout: "", loaned_to: "" }) //creates new doc with quantity 1
+    const itemID = uuidv4()
+    const docRef = doc(collection(firestore, 'tents'), itemID) //use normalized id
+    await setDoc(docRef, { name: name, oac_num: 0, in_stock: true, loaned: false, details: "", leader_signout: "", loaned_to: "", id: {itemID}}) //creates new doc with quantity 1
     
     await updateInventory() //refreshes inventory list
 }
 
 const removeItem = async (item) => { //removes or decrements item in Firestore
-    const docRef = doc(collection(firestore, 'tents'), item)
-    const docSnap = await getDoc(docRef)
-    if (!docSnap.exists()) return
-    const { quantity = 0 } = docSnap.data()
-    if (quantity <= 1) {
-        await deleteDoc(docRef)
-    } else {
-        await setDoc(docRef, { quantity: quantity - 1 }, { merge: true })
-    }
+    const docRef = doc(collection(firestore, 'tents'), item.id.itemID)
+    await deleteDoc(docRef)
     await updateInventory() //refreshes inventory list
 }
 
@@ -133,7 +125,7 @@ return (
           </Box>
           <Stack width="fill" height="700px" overflow="auto">
               {inventory.map((item) => (
-                  <Box key={item.name} width="100%" minHeight={'50px'} display={'flex'} justifyContent={'space-between'} alignItems={'center'} bgcolor={'#f0f0f0'} paddingX={5}>
+                  <Box key={item.id.itemID} width="100%" minHeight={'50px'} display={'flex'} justifyContent={'space-between'} alignItems={'center'} bgcolor={'#f0f0f0'} paddingX={5}>
                       <Typography variant={'h6'} color='#333' textAlign={'left'}>
                           {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
                       </Typography>
@@ -143,7 +135,7 @@ return (
                       <Typography variant='body1' color='#333' textAlign={'center'}>
                             {item.in_stock}
                       </Typography>
-                      <Button variant='contained' onClick={() => removeItem(item.name)}>
+                      <Button variant='contained' onClick={() => removeItem(item)}>
                           Remove
                       </Button>
                   </Box>
