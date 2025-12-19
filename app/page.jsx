@@ -1,7 +1,8 @@
 'use client' //indicates this is a client-side component
 
 import { useState, useEffect } from 'react'
-import { Box, Stack, Typography, Button, Modal, TextField } from '@mui/material'
+import { Box, Stack, Typography, Button, Modal, TextField, 
+    Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material'
 import { firestore } from '@/firebase'
 import { v4 as uuidv4 } from 'uuid'
 import {
@@ -13,6 +14,7 @@ import {
   deleteDoc,
   getDoc,
 } from 'firebase/firestore'
+import { get } from 'http'
 
 const style = {
   position: 'absolute',
@@ -29,19 +31,21 @@ const style = {
   gap: 3,
 }
 
+
 export default function Home() {
-  const updateInventory = async () => {
-  const snapshot = query(collection(firestore, 'tents'))
-  const docs = await getDocs(snapshot)
+  const updateInventory = async (tables) => {
+  const snapshot = query(collection(firestore, tables[1]))
+  const docs = await getDocs(snapshot) 
   const inventoryList = []
   docs.forEach((doc) => {
     inventoryList.push({ name: doc.id, ...doc.data() })
-  })
+})
   setInventory(inventoryList)
 }
 
 useEffect(() => {
-  updateInventory()
+  updateInventory(['packs','tents','sleeping-pads','headlamps','filters',
+    'cooking','saws','bear','trowels','snowshoes','misc'])
 }, [])
 
 const addItem = async (item) => { //adds new item to Firestore
