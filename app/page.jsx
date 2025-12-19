@@ -5,6 +5,7 @@ import { Box, Stack, Typography, Button, Modal, TextField,
     Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material'
 import { firestore } from '@/firebase'
 import { v4 as uuidv4 } from 'uuid'
+import ReactVirtualizedTable from './components/TableComponent'
 import {
   collection,
   doc,
@@ -33,8 +34,8 @@ const style = {
 
 
 export default function Home() {
-  const updateInventory = async (tables) => {
-  const snapshot = query(collection(firestore, tables[1]))
+  const updateInventory = async () => {
+  const snapshot = query(collection(firestore, 'tents'))
   const docs = await getDocs(snapshot) 
   const inventoryList = []
   docs.forEach((doc) => {
@@ -44,8 +45,7 @@ export default function Home() {
 }
 
 useEffect(() => {
-  updateInventory(['packs','tents','sleeping-pads','headlamps','filters',
-    'cooking','saws','bear','trowels','snowshoes','misc'])
+  updateInventory() //['packs','tents','sleeping-pads','headlamps','filters','cooking','saws','bear','trowels','snowshoes','misc']
 }, [])
 
 const addItem = async (item) => { //adds new item to Firestore
@@ -115,36 +115,7 @@ return (
           Add New Item
       </Button>
       <Box border={'1px solid #333'}>
-          <Box width="1250px" height={'100px'} bgcolor={'#ADD8E6'} display={'flex'} justifyContent={'space-between'} alignItems={'center'} paddingX={5}>
-              <Typography variant="h6" color="#333" textAlign={'center'}>
-                  Tents
-              </Typography>
-              <Typography variant="body1" color="#333" textAlign={'center'}>
-                  OAC Number
-              </Typography>
-              <Typography variant="body1" color="#333" textAlign={'center'}>
-                  Available?
-              </Typography>
-
-          </Box>
-          <Stack width="fill" height="700px" overflow="auto">
-              {inventory.map((item) => (
-                  <Box key={item.id.itemID} width="100%" minHeight={'50px'} display={'flex'} justifyContent={'space-between'} alignItems={'center'} bgcolor={'#f0f0f0'} paddingX={5}>
-                      <Typography variant={'h6'} color='#333' textAlign={'left'}>
-                          {item.name.charAt(0).toUpperCase() + item.name.slice(1)}
-                      </Typography>
-                      <Typography variant='body1' color='#333' textAlign={'center'}>
-                          {item.oac_num}
-                      </Typography>
-                      <Typography variant='body1' color='#333' textAlign={'center'}>
-                            {item.in_stock}
-                      </Typography>
-                      <Button variant='contained' onClick={() => removeItem(item)}>
-                          Remove
-                      </Button>
-                  </Box>
-              ))}
-          </Stack>
+          <ReactVirtualizedTable/>
       </Box>
   </Box>
   )
