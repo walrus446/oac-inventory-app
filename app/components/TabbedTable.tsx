@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid'
 function TabPanel(props: { [x: string]: any; children: any; value: any; index: any }) {
     const { children, value, index, ...other } = props
     return (
-        <div 
+        <span
           role="tabpanel"
           hidden={value !== index}
           id={uuidv4()}
@@ -18,7 +18,7 @@ function TabPanel(props: { [x: string]: any; children: any; value: any; index: a
                     <Typography>{children}</Typography>
                 </Box>
             )}
-          </div>
+          </span>
     )
 }
 
@@ -31,19 +31,55 @@ export function TabbedTables() {
 
     return (
     <Box sx={{ width: '100%' }}>
-      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', backgroundColor: '#bdb7ab' }}>
         <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
-          <Tab label="Packs" id="simple-tab-0" aria-controls="simple-tabpanel-0" />
-          <Tab label="Tents" id="simple-tab-1" aria-controls="simple-tabpanel-1" />
+          <Tab label="Packs" id={uuidv4()} aria-controls="simple-tabpanel-${id}" />
+          <Tab label="Tents" id={uuidv4()} aria-controls="simple-tabpanel-${id}" />
+          <Tab label="Sleeping Pads" id={uuidv4()} aria-controls="simple-tabpanel-${id}" />
+          <Tab label="Headlamps" id={uuidv4()} aria-controls="simple-tabpanel-${id}" />
+          <Tab label="Filters" id={uuidv4()} aria-controls="simple-tabpanel-${id}" />
+          <Tab label="Cooking" id={uuidv4()} aria-controls="simple-tabpanel-${id}" />
+          <Tab label="Saws" id={uuidv4()} aria-controls="simple-tabpanel-${id}" />
+          <Tab label="Bear" id={uuidv4()} aria-controls="simple-tabpanel-${id}" />
+          <Tab label="Trowels" id={uuidv4()} aria-controls="simple-tabpanel-${id}" />
+          <Tab label="Snowshoes" id={uuidv4()} aria-controls="simple-tabpanel-${id}" />
+          <Tab label="Misc. - White Box" id={uuidv4()} aria-controls="simple-tabpanel-${id}" />
         </Tabs>
       </Box>
-      <TabPanel value={value} index={0}>
+      <TabPanel value={value} index={0} component="span">
         {/* Pass data to the first table component */}
         <ReactVirtualizedTable table='packs'/> {/* make this take in a prop for which table*/}
       </TabPanel>
-      <TabPanel value={value} index={1}>
+      <TabPanel value={value} index={1} component="span">
         {/* Pass data to the second table component */}
         <ReactVirtualizedTable table='tents'/>
+      </TabPanel>
+      <TabPanel value={value} index={2} component="span">
+        <ReactVirtualizedTable table='sleeping-pads'/>
+      </TabPanel>
+      <TabPanel value={value} index={3} component="span">
+        <ReactVirtualizedTable table='headlamps'/>
+      </TabPanel>
+      <TabPanel value={value} index={4} component="span">
+        <ReactVirtualizedTable table='filters'/>
+      </TabPanel>
+      <TabPanel value={value} index={5} component="span">
+        <ReactVirtualizedTable table='cooking'/>
+      </TabPanel>
+      <TabPanel value={value} index={6} component="span">
+        <ReactVirtualizedTable table='saws'/>
+      </TabPanel>
+      <TabPanel value={value} index={7} component="span">
+        <ReactVirtualizedTable table='bear'/>
+      </TabPanel>
+      <TabPanel value={value} index={8} component="span">
+        <ReactVirtualizedTable table='trowels'/>
+      </TabPanel>
+      <TabPanel value={value} index={9} component="span">
+        <ReactVirtualizedTable table='snowshoes'/>
+      </TabPanel>
+      <TabPanel value={value} index={10} component="span">
+        <ReactVirtualizedTable table='misc'/>
       </TabPanel>
     </Box>
   )

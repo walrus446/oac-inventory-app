@@ -22,7 +22,7 @@ const style = {
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',
-  width: 400,
+  width: { xs: '90%', sm: 600, md: 800 }, 
   bgcolor: 'white',
   border: '2px solid #000',
   boxShadow: 24,
@@ -30,12 +30,13 @@ const style = {
   display: 'flex',
   flexDirection: 'column',
   gap: 3,
+  overflow: 'auto',  
 }
 
 
 export default function Home() {
-  const updateInventory = async () => {
-  const snapshot = query(collection(firestore, 'tents'))
+  const updateInventory = async (table) => {
+  const snapshot = query(collection(firestore, table))
   const docs = await getDocs(snapshot) 
   const inventoryList = []
   docs.forEach((doc) => {
@@ -45,21 +46,21 @@ export default function Home() {
 }
 
 useEffect(() => {
-  updateInventory() //['packs','tents','sleeping-pads','headlamps','filters','cooking','saws','bear','trowels','snowshoes','misc']
+  updateInventory('packs') //['packs','tents','sleeping-pads','headlamps','filters','cooking','saws','bear','trowels','snowshoes','misc']
 }, [])
 
-const addItem = async (item) => { //adds new item to Firestore
+const addItem = async (item, num, detail, table) => { //adds new item to Firestore
     const name = item?.trim()
     if (!name) return
     const itemID = uuidv4()
-    const docRef = doc(collection(firestore, 'tents'), itemID) //use normalized id
-    await setDoc(docRef, { name: name, oac_num: 0, in_stock: true, loaned: false, details: "", leader_signout: "", loaned_to: "", id: {itemID}}) //creates new doc with quantity 1
+    const docRef = doc(collection(firestore, table), itemID) //use normalized id
+    await setDoc(docRef, { name: name, oac_num: num, in_stock: true, loaned: false, details: detail, leader_signout: "", loaned_to: "", id: {itemID}}) //creates new doc with quantity 1
     
-    await updateInventory() //refreshes inventory list
+    await updateInventory(table) //refreshes inventory list
 }
 
-const removeItem = async (item) => { //removes or decrements item in Firestore
-    const docRef = doc(collection(firestore, 'tents'), item.id.itemID)
+const removeItem = async (item, table) => { //removes or decrements item in Firestore
+    const docRef = doc(collection(firestore, table), item.id.itemID)
     await deleteDoc(docRef)
     await updateInventory() //refreshes inventory list
 }
@@ -70,6 +71,9 @@ const handleClose = () => setOpen(false) //closes modal
 const [inventory, setInventory] = useState([]) //manages inventory list
 const [open, setOpen] = useState(false) //manages modal visibility
 const [itemName, setItemName] = useState('') //manages new item name
+const [itemNum, setItemNum] = useState(0)
+const [itemDetails, setItemDetails] = useState('')
+const [itemTable, setItemTable] = useState('')
 return (
   <Box
    width="100vw"
@@ -80,15 +84,18 @@ return (
    alignItems={'center'}
    gap={2}
    overflow={'auto'}
+   bgcolor={'#000000'}
   >
       <Modal
       open={open}
       onClose={handleClose}
       aria-labelledby="modal-modal-title"
       aria-describedby="modal-modal-description"
+      bgcolor='#bdb7ab'
+      size="md"
     >
-      <Box sx={style} overflow={'auto'}>
-          <Typography id = "modal-modal-title" variant="h6" component="h2">
+      <Box sx={style} overflow={'auto'} bgcolor={'#000000'}>
+          <Typography id = "modal-modal-title" variant="h6" component="h2" color='#000000'>
               Add New Item
           </Typography>
           <Stack width={'100%'} direction={'row'} spacing={2}>
@@ -100,9 +107,37 @@ return (
                   value={itemName}
                   onChange={(e) => setItemName(e.target.value)} //updates itemName state
               />
+              <TextField
+                  id = "outlined-basic"
+                  label = "OAC Number"
+                  variant = "outlined"
+                  type='number'
+                  fullWidth
+                  value={itemNum}
+                  onChange={(e) => setItemNum(e.target.value)} //updates itemName state
+              />
+              <TextField
+                  id = "outlined-basic"
+                  label = "Important Details"
+                  variant = "outlined"
+                  fullWidth
+                  value={itemDetails}
+                  onChange={(e) => setItemDetails(e.target.value)} //updates itemName state
+              />
+              <TextField //Change this to dropdown
+                  id = "outlined-basic"
+                  label = "Table"
+                  variant = "outlined"
+                  fullWidth
+                  value={itemTable}
+                  onChange={(e) => setItemTable(e.target.value)} //updates itemName state
+              />
               <Button variant="outlined" onClick={() => {
-                  addItem(itemName) //calls addItem function
+                  addItem(itemName, itemNum, itemDetails, itemTable) //calls addItem function
                   setItemName('') //resets itemName state
+                  setItemNum(0)
+                  setItemDetails('')
+                  setItemTable('')
                   handleClose() //closes modal
               }}
               >

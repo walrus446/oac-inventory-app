@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { alpha } from '@mui/material/styles';
 import { collection, onSnapshot, query } from 'firebase/firestore'
 import { firestore } from '@/firebase'
@@ -64,83 +64,86 @@ const VirtuosoTableComponents: TableComponents<Data> = {
     )),
 }
 
-function fixedHeaderContent() {
-    return (
-        <TableRow sx={{backgroundColor: '#bdb7ab'}}>
-            <TableCell style={{ width: 48 }} />
-            {columns.map((column) => (
-                <TableCell 
-                 key={column.dataKey} 
-                 variant='head'
-                 align={column.numeric || false ? 'right' : 'left'}
-                 style={{ width: column.width }}
-                 >
-                    {column.label}
-                 </TableCell>
-            ))}
-        </TableRow>
-    )
-}
-
-function rowContent(_index: number, row: Data) {
-    return (
-        <React.Fragment key={row.id}>
-            <TableRow>
-                <TableCell>
-                    {row.details ? (
-                        <IconButton
-                         aria-label="expand row"
-                         size="small"
-                         onClick={(e) => {
-                             // Toggle is managed via DOM event since TableVirtuoso's itemContent is pure render.
-                             // We'll use a custom event to signal the component-level handler.
-                             const ev = new CustomEvent('toggle-row-expand', { detail: row.id })
-                             window.dispatchEvent(ev)
-                         }}
-                        >
-                            <KeyboardArrowDownIcon />
-                        </IconButton>
-                    ) : null}
-                </TableCell>
-
-                {/* Render cells in a fixed order with fallbacks to common field names */}
-                <TableCell>{row.name ?? (row as any).itemName ?? row.id}</TableCell>
-                <TableCell>{(row.oac_num ?? (row as any).num ?? (row as any).oacNumber) ?? ''}</TableCell>
-                <TableCell>{typeof row.in_stock === 'boolean' ? (row.in_stock ? 'Yes' : 'No') : (row.in_stock ?? '')}</TableCell>
-                <TableCell>{row.leader_signout ?? (row as any).leader ?? ''}</TableCell>
-                <TableCell>{typeof row.loaned === 'boolean' ? (row.loaned ? 'Yes' : 'No') : (row.loaned ?? '')}</TableCell>
-                <TableCell>{row.loaned_to ?? (row as any).loanedTo ?? ''}</TableCell>
-            </TableRow>
-
-            <TableRow>
-                <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={columns.length + 1}>
-                    <Collapse in={false} timeout="auto" unmountOnExit>
-                        <Box margin={1}>
-                            <Typography variant="body2">{row.details}</Typography>
-                        </Box>
-                    </Collapse>
-                </TableCell>
-            </TableRow>
-        </React.Fragment>
-    )
-}
-
 export default function ReactVirtualizedTable(props: { table: string; }) {
     const { table } = props
     const [rows, setRows] = useState<Data[]>(rowsInitial)
     // rows actually passed to Virtuoso (includes inserted detail rows)
     const [displayRows, setDisplayRows] = useState<Array<Data | DetailRow>>([])
 
+    const [sortConfig, setSortConfig] = useState<{ key: keyof Data; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending'})
+
+    const sortData = (key: keyof Data) => {
+        let direction: 'ascending' | 'descending' = 'ascending'
+        if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+            direction = 'descending'
+        }
+
+        const sortedRows = [...rows].sort((a, b) => {
+            const va = a[key]
+            const vb = b[key]
+
+            if (va == null && vb == null) return 0
+            if (va == null) return direction === 'ascending' ? -1 : 1
+            if (vb == null) return direction === 'ascending' ? 1 : -1
+
+            if (typeof va === 'number' && typeof vb === 'number') {
+                return direction === 'ascending' ? va - vb : vb - va
+            }
+
+            const sa = String(va).toLowerCase()
+            const sb = String(vb).toLowerCase()
+            if (sa < sb) return direction === 'ascending' ? -1 : 1
+            if (sa > sb) return direction === 'ascending' ? 1 : -1
+            return 0
+        })
+
+        setRows(sortedRows)
+        // when sorting, collapse details and set displayRows to sorted base rows
+        setDisplayRows(sortedRows)
+        setSortConfig({ key, direction })
+    }
+
     useEffect(() => {
         const q = query(collection(firestore, table))
         const unsubscribe = onSnapshot(q, (snap) => {
             const items: Data[] = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }))
-                setRows(items)
-                // reset displayRows when base rows change
-                setDisplayRows(items)
+            // sort immediately by name (ascending)
+            const sortedItems = [...items].sort((a, b) => {
+                const sa = String(a.name ?? '').toLowerCase()
+                const sb = String(b.name ?? '').toLowerCase()
+                if (sa < sb) return -1
+                if (sa > sb) return 1
+                return 0
+            })
+            setRows(sortedItems)
+            setDisplayRows(sortedItems)
+            setSortConfig({ key: 'name', direction: 'ascending' })
         })
         return () => unsubscribe()
-    }, [])
+    }, [table])
+
+    // fixed header content now uses parent state and sortData
+    const fixedHeaderContent = () => {
+        return (
+            <TableRow sx={{backgroundColor: '#bdb7ab'}}>
+                <TableCell style={{ width: 48 }} />
+                {columns.map((column) => (
+                    <TableCell 
+                     key={column.dataKey as string} 
+                     variant='head'
+                     onClick={() => sortData(column.dataKey)}
+                     align={column.numeric || false ? 'right' : 'left'}
+                     style={{ width: column.width }}
+                     >
+                        {column.label}
+                        {sortConfig.key === column.dataKey && (
+                            <span>{sortConfig.direction === 'ascending' ? <KeyboardArrowUpIcon/> : <KeyboardArrowDownIcon/>}</span>
+                        )}
+                     </TableCell>
+                ))}
+            </TableRow>
+        )
+    }
 
     // toggle detail row for an item by inserting/removing a detail row immediately after it
     const toggleDetail = (id: string) => {
@@ -173,7 +176,7 @@ export default function ReactVirtualizedTable(props: { table: string; }) {
                 <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={columns.length + 1}>
                     <Collapse in={true} timeout="auto" unmountOnExit>
                         <Box margin={1}>
-                            <Typography variant="body2">Details: {dr.details}</Typography>
+                            <Typography variant="body2">Details - {dr.details}</Typography>
                         </Box>
                     </Collapse>
                 </TableCell>
