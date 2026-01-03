@@ -19,8 +19,7 @@ interface Data {
     details?: string;
     in_stock?: boolean;
     leader_signout?: string;
-    loaned?: boolean;
-    loaned_to?: string;
+    date?: string;
 }
 
 interface DetailRow {
@@ -39,11 +38,10 @@ interface ColumnData {
 
 const columns: ColumnData[] = [
     { width: 200, label: 'Item Name', dataKey: 'name' },
-    { width: 120, label: 'OAC Number', dataKey: 'oac_num' },
-    { width: 120, label: 'Availability', dataKey: 'in_stock' },
+    { width: 100, label: 'OAC Number', dataKey: 'oac_num' },
+    { width: 80, label: 'Availability', dataKey: 'in_stock' },
     { width: 160, label: 'Trip Leader', dataKey: 'leader_signout' },
-    { width: 120, label: 'Loaned?', dataKey: 'loaned' },
-    { width: 160, label: 'Loaned To', dataKey: 'loaned_to' },
+    { width: 160, label: 'Date', dataKey: 'date'},
 ]
 
 const rowsInitial: Data[] = []
@@ -252,7 +250,7 @@ export default function ReactVirtualizedTable(props: { table: string; }) {
     }
 
     return (
-        <Paper style={{ height: 400, width: 1500 }} sx={{ backgroundColor: '#FFFFFF00' }}>
+        <Paper style={{ height: 800, width: 900 }} sx={{ backgroundColor: '#FFFFFF00' }}>
             <TableVirtuoso
              data={displayRows}
              components={VirtuosoTableComponents}

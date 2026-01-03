@@ -30,9 +30,9 @@ export function TabbedTables() {
     }
 
     return (
-    <Box sx={{ width: '100%' }}>
+    <Box sx={{ width: '100%', height:'90%'}}>
       <Box sx={{ borderBottom: 1, borderColor: 'divider', backgroundColor: '#bdb7ab' }}>
-        <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
+        <Tabs value={value} onChange={handleChange} variant='scrollable' scrollButtons='auto' allowScrollButtonsMobile aria-label="basic tabs example" sx={{minHeight: 0}}>
           <Tab label="Packs" id={uuidv4()} aria-controls="simple-tabpanel-${id}" />
           <Tab label="Tents" id={uuidv4()} aria-controls="simple-tabpanel-${id}" />
           <Tab label="Sleeping Pads" id={uuidv4()} aria-controls="simple-tabpanel-${id}" />
